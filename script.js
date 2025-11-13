@@ -7,6 +7,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const AUTOSAVE_DELAY = 1500; // 1.5 seconds
     const WORD_LIMIT = 100;
     
+    // Connect to Socket.io server
+    const socket = io('http://localhost:3000');
+    
+    // Listen for initial text from server
+    socket.on('initialText', (data) => {
+        if (data && data.text) {
+            editor.innerHTML = data.text;
+            localStorage.setItem('definitionText', data.text);
+            localStorage.setItem('lastSaved', data.updatedAt.toString());
+            updateWordCount();
+        }
+    });
+    
+    // Listen for text updates from other clients
+    socket.on('textUpdate', (data) => {
+        if (data && data.text) {
+            editor.innerHTML = data.text;
+            localStorage.setItem('definitionText', data.text);
+            localStorage.setItem('lastSaved', data.updatedAt.toString());
+            updateWordCount();
+            console.log('Content updated from another client');
+        }
+    });
+    
     // Load content from localStorage first (for instant load)
     const loadFromLocalStorage = () => {
         const savedText = localStorage.getItem('definitionText');
@@ -61,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // Save to localStorage and server
-    const saveContent = async () => {
+    const saveContent = () => {
         const text = editor.innerHTML;
         const timestamp = Date.now();
         
@@ -69,28 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('definitionText', text);
         localStorage.setItem('lastSaved', timestamp.toString());
         
-        // Save to server
-        try {
-            // Use absolute URL to ensure it works when accessing the page directly
-            const response = await fetch('http://localhost:3000/api/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    text,
-                    updatedAt: timestamp
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to save to server');
-            }
-            
-            console.log('Content saved successfully');
-        } catch (error) {
-            console.error('Error saving to server:', error);
-        }
+        // Save to server using socket.io
+        socket.emit('textUpdate', {
+            text,
+            updatedAt: timestamp
+        });
+        
+        console.log('Content saved via socket.io');
     };
     
     // Debounced autosave
@@ -140,34 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.execCommand('insertText', false, text.toUpperCase());
     });
     
-    // Poll server for updates every 3 seconds
-    const pollForUpdates = async () => {
-        try {
-            const response = await fetch('http://localhost:3000/api/text');
-            if (!response.ok) {
-                throw new Error('Failed to fetch from server');
-            }
-            
-            const data = await response.json();
-            const localTimestamp = localStorage.getItem('lastSaved') || 0;
-            
-            // Only update if server data is newer than local data
-            if (data.text && data.updatedAt > parseInt(localTimestamp)) {
-                editor.innerHTML = data.text;
-                localStorage.setItem('definitionText', data.text);
-                localStorage.setItem('lastSaved', data.updatedAt.toString());
-                updateWordCount();
-                console.log('Content updated from server');
-            }
-        } catch (error) {
-            console.error('Error polling server:', error);
-        }
-    };
-    
     // Initialize
     loadFromLocalStorage();
-    loadFromServer();
-    
-    // Start polling for updates
-    setInterval(pollForUpdates, 3000); // Poll every 3 seconds
 });

@@ -3,8 +3,18 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
@@ -83,8 +93,48 @@ app.post('/api/save', (req, res) => {
   res.json(definitionData);
 });
 
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('New client connected');
+  
+  // Send current text to newly connected client
+  socket.emit('initialText', definitionData);
+  
+  // Listen for text updates from clients
+  socket.on('textUpdate', (data) => {
+    // Validate input
+    if (!data.text || !data.updatedAt) {
+      return;
+    }
+    
+    // Enforce word limit
+    const wordCount = countWords(data.text);
+    if (wordCount > 100) {
+      return;
+    }
+    
+    // Only update if the incoming timestamp is newer
+    if (data.updatedAt > definitionData.updatedAt) {
+      definitionData = {
+        text: data.text,
+        updatedAt: data.updatedAt
+      };
+      
+      // Save to file
+      saveData();
+      
+      // Broadcast to all other clients
+      socket.broadcast.emit('textUpdate', definitionData);
+    }
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   loadData(); // Load data when server starts
 });
