@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Connect to Socket.io server
     // Use the production server URL when deployed, or localhost for development
     const socketServerUrl = window.location.hostname === 'america100.netlify.app' 
-        ? 'https://america100-websocket.onrender.com' // Your Render WebSocket server URL
+        ? 'https://the-american-creed.onrender.com' // Your Render WebSocket server URL
         : 'http://localhost:3000';
     const socket = io(socketServerUrl);
     
