@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load content from server (may override localStorage if newer)
     const loadFromServer = async () => {
         try {
-            const response = await fetch('/api/text');
+            // Use absolute URL to ensure it works when accessing the page directly
+            const response = await fetch('http://localhost:3000/api/text');
             if (!response.ok) {
                 throw new Error('Failed to fetch from server');
             }
@@ -70,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Save to server
         try {
-            const response = await fetch('/api/save', {
+            // Use absolute URL to ensure it works when accessing the page directly
+            const response = await fetch('http://localhost:3000/api/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
