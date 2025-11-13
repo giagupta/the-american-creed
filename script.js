@@ -8,7 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const WORD_LIMIT = 100;
     
     // Connect to Socket.io server
-    const socket = io('http://localhost:3000');
+    // Use the production server URL when deployed, or localhost for development
+    const socketServerUrl = window.location.hostname === 'america100.netlify.app' 
+        ? 'https://america100-websocket.onrender.com' // Your Render WebSocket server URL
+        : 'http://localhost:3000';
+    const socket = io(socketServerUrl);
     
     // Listen for initial text from server
     socket.on('initialText', (data) => {
