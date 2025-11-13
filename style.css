@@ -88,5 +88,7 @@ body {
         font-size: calc(26px * 0.6);
         line-height: calc(34px * 0.6);
         overflow-wrap: break-word; /* Allow word wrapping on mobile */
+        overflow-y: auto; /* Add scrolling if content exceeds height */
+        max-height: calc(100% - 96px); /* Ensure content doesn't exceed container */
     }
 }
