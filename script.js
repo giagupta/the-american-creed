@@ -140,7 +140,34 @@ document.addEventListener('DOMContentLoaded', () => {
         document.execCommand('insertText', false, text.toUpperCase());
     });
     
+    // Poll server for updates every 3 seconds
+    const pollForUpdates = async () => {
+        try {
+            const response = await fetch('http://localhost:3000/api/text');
+            if (!response.ok) {
+                throw new Error('Failed to fetch from server');
+            }
+            
+            const data = await response.json();
+            const localTimestamp = localStorage.getItem('lastSaved') || 0;
+            
+            // Only update if server data is newer than local data
+            if (data.text && data.updatedAt > parseInt(localTimestamp)) {
+                editor.innerHTML = data.text;
+                localStorage.setItem('definitionText', data.text);
+                localStorage.setItem('lastSaved', data.updatedAt.toString());
+                updateWordCount();
+                console.log('Content updated from server');
+            }
+        } catch (error) {
+            console.error('Error polling server:', error);
+        }
+    };
+    
     // Initialize
     loadFromLocalStorage();
     loadFromServer();
+    
+    // Start polling for updates
+    setInterval(pollForUpdates, 3000); // Poll every 3 seconds
 });
