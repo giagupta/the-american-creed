@@ -69,14 +69,24 @@ body {
     }
     
     .editor {
+        width: calc(100% - 192px); /* Make editor responsive within margins */
         font-size: calc(26px * 0.8);
         line-height: calc(34px * 0.8);
     }
 }
 
 @media (max-width: 600px) {
+    .definition-box {
+        border: 1px solid rgb(228, 140, 255);
+    }
+    
     .editor {
+        top: 48px; /* 0.5in margin on mobile */
+        left: 48px; /* 0.5in margin on mobile */
+        width: calc(100% - 96px); /* 100% - 1in margins on mobile */
+        height: calc(100% - 96px); /* 100% - 1in margins on mobile */
         font-size: calc(26px * 0.6);
         line-height: calc(34px * 0.6);
+        overflow-wrap: break-word; /* Allow word wrapping on mobile */
     }
 }
